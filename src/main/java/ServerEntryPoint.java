@@ -35,6 +35,7 @@ public class ServerEntryPoint {
                 requestHandler(socket);
                 System.out.printf(endConnectionString, addr);
                 socket.close();
+                headers.clear();
             } catch (IOException e) {
                 e.printStackTrace();
             }
