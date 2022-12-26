@@ -1,3 +1,5 @@
+import Exceptions.HeaderViolationProtocolException;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
@@ -46,14 +48,26 @@ public class HTTPController implements Runnable {
 
     public void requestHandler(Socket connection) throws IOException
     {
-        String request = getRequest(connection.getInputStream());
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+        String request;
+        try
+        {
+            request = getRequest(connection.getInputStream());
+        }
+        catch (HeaderViolationProtocolException e)
+        {
+            e.printStackTrace();
+            bw.write(HTTPResponse.methodNotSupportedResponse());
+            bw.flush();
+            return;
+        }
+
         if(Main.printDebugFlag)
             System.out.println(request);
         if(request.length() > 0)
         {
             String[] header = request.substring(0, request.indexOf("\n")).split(" ");
             String http_method = header[0];
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
             if (!ApplicationConstants.HTTP_METHODS.contains(http_method))
             {
                 bw.write(HTTPResponse.methodNotSupportedResponse());
@@ -104,7 +118,7 @@ public class HTTPController implements Runnable {
         }
     }
 
-    public String getRequest(InputStream stream) throws IOException
+    public String getRequest(InputStream stream) throws IOException, HeaderViolationProtocolException
     {
         StringBuilder request = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(stream));
@@ -114,7 +128,7 @@ public class HTTPController implements Runnable {
         return request.toString();
     }
 
-    public void getHeaders(BufferedReader br, StringBuilder request) throws IOException
+    public void getHeaders(BufferedReader br, StringBuilder request) throws IOException, HeaderViolationProtocolException
     {
         boolean skipFirst = true;
         String[] split;
@@ -124,6 +138,8 @@ public class HTTPController implements Runnable {
             if(!skipFirst)
             {
                 split = line.split(":");
+                if(split.length != 2)
+                    throw new HeaderViolationProtocolException("Header non formattato correttamente!");
                 headers.put(split[0].strip(), split[1].strip());
             }
             else
