@@ -1,0 +1,8 @@
+{
+  "controllers":
+  {
+    "postController" : "ImplementedController",
+    "getController" : "ImplementedController",
+    "activate" : "ActivationController"
+  }
+}
