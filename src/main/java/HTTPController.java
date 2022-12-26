@@ -138,9 +138,12 @@ public class HTTPController implements Runnable {
             if(!skipFirst)
             {
                 split = line.split(":");
-                if(split.length != 2)
+                if(split.length < 2)
                     throw new HeaderViolationProtocolException("Header non formattato correttamente!");
-                headers.put(split[0].strip(), split[1].strip());
+                StringBuilder headerValue = new StringBuilder();
+                for(int i = 1; i < split.length; i++)
+                    headerValue.append(split[i].strip());
+                headers.put(split[0].strip(), headerValue.toString());
             }
             else
                 skipFirst = false;
